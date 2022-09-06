@@ -2,135 +2,151 @@
     ====================================================
     ================= CALCULATOR LOGIC =================
     ====================================================
-*/ 
-
-// get the result element
-let result  = document.getElementById("result");
-
-// Input numbers by key pressed
-function input(num){
-    let number = result.value;
-    result.value = number + num;
-}
-
-// Calculator logic
-function calc(){
-    if(result.value != ""){
-        let result2  = result.value;
-        result.value = eval(result2)
-    } else{
-        alert("Erro! Adicione valores válidos.")
-    }
-}
-
-// Reset button
-function reset(){
-    result.value = "";
-}
-
-// Del button
-function del(){
-    let result2  = result.value;
-    result.value = result2.substring(0, result2.length - 1);
-}
-
-/*
-    ====================================================
-    =================== TOGGLE THEME ===================
-    ====================================================
 */
 
-// All colors for differents themes
-const theme = {
-    defaul(){
-        root.style.setProperty('--background'          , '#3a4764');
-        root.style.setProperty('--background-dark'     , '#232c43');
-        root.style.setProperty('--background-very-dark', '#182034');
-        
-        root.style.setProperty('--key-color-top'       , '#ffffff');
-        root.style.setProperty('--key-color-bottom'    , '#3a4764');
-        root.style.setProperty('--key-background'      , '#eae3dc');
-        root.style.setProperty('--key-background-dark' , '#dfd9d2');
-        root.style.setProperty('--key-shadow'          , '#b4a597');
+// Selecting buttons, previous operand and current operand
+const numberButtons = document.querySelectorAll("[data-number]");
+const operationButtons = document.querySelectorAll("[data-operator]");
+const equalsButton = document.querySelector("[data-equals]");
+const deleteButton = document.querySelector("[data-delete]");
+const allClearButton = document.querySelector("[data-all-clear]");
+const previousOperandTextElement = document.querySelector(
+  "[data-previous-operand]"
+);
+const currentOperandTextElement = document.querySelector(
+  "[data-current-operand]"
+);
 
-        root.style.setProperty('--key-blue-background' , '#637097');
-        root.style.setProperty('--key-blue-shadow'     , '#404e72');
+// Store the Operands
+class Calculator {
+  constructor(previousOperandTextElement, currentOperandTextElement) {
+    this.previousOperandTextElement = previousOperandTextElement;
+    this.currentOperandTextElement = currentOperandTextElement;
+    this.clear();
+  }
 
-        root.style.setProperty('--key-red-background'  , '#d03f2f');
-        root.style.setProperty('--key-red-shadow'      , '#93261a');
-    },
-    light(){
-        root.style.setProperty('--background'          , '#e6e6e6');
-        root.style.setProperty('--background-dark'     , '#d3cdcd');
-        root.style.setProperty('--background-very-dark', '#eeeeee');
-        
-        root.style.setProperty('--key-color-top'       , '#3d3d33');
-        root.style.setProperty('--key-color-bottom'    , '#3d3d33');
-        root.style.setProperty('--key-background'      , '#e5e4e0');
-        root.style.setProperty('--key-background-dark' , '#dfd9d2');
-        root.style.setProperty('--key-shadow'          , '#b4a597');
+  formatDisplayNumber(number) {
+    const stringNumber = number.toString();
 
-        root.style.setProperty('--key-blue-background' , '#388187');
-        root.style.setProperty('--key-blue-shadow'     , '#1c6166');
+    const integerDigits = parseFloat(stringNumber.split(".")[0]);
+    const decimalDigits = stringNumber.split(".")[1];
 
-        root.style.setProperty('--key-red-background'  , '#d03f2f');
-        root.style.setProperty('--key-red-shadow'      , '#93261a');
-    },
-    dark(){
-        root.style.setProperty('--background'          , '#17062a');
-        root.style.setProperty('--background-dark'     , '#1e0836');
-        root.style.setProperty('--background-very-dark', '#1e0836');
-        
-        root.style.setProperty('--key-color-top'       , '#f7de43');
-        root.style.setProperty('--key-color-bottom'    , '#f7de43');
-        root.style.setProperty('--key-background'      , '#331b4d');
-        root.style.setProperty('--key-shadow'          , '#851c9c');
+    let integerDisplay;
 
-        root.style.setProperty('--key-blue-background' , '#56077c');
-        root.style.setProperty('--key-blue-shadow'     , '#851c9c');
-
-        root.style.setProperty('--key-red-background'  , '#00decf');
-        root.style.setProperty('--key-red-shadow'      , '#00decf');
+    if (isNaN(integerDigits)) {
+      integerDisplay = "";
+    } else {
+      integerDisplay = integerDigits.toLocaleString("en", {
+        maximumFractionDigits: 0,
+      });
     }
-}
 
-// Get the root element
-var root = document.querySelector(':root');
-
-// Checking the user themes preference
-const darkThemeMq  = window.matchMedia("(prefers-color-scheme: dark)");
-const lightThemeMq = window.matchMedia("(prefers-color-scheme: light)");
-
-// changing the theme with the results above
-if (darkThemeMq.matches) {
-    document.getElementById('btnTheme').value = "3";
-    theme.dark();
-} else if(lightThemeMq.matches){
-    document.getElementById('btnTheme').value = "2";
-    theme.light();    
-} else {
-    document.getElementById('btnTheme').value = "1";
-    theme.defaul();    
-}
-
-// Create a function for recive the value of range input
-function myFunction_set(val) {
-    // receiving the input type range value
-    document.getElementById('btnTheme').value = val; 
-
-    // changing the theme with the results above
-    if(val == 1){
-        theme.defaul();
-    } 
-     
-    else if(val == 2){
-        theme.light();
+    if (decimalDigits != null) {
+      return `${integerDisplay}.${decimalDigits}`;
+    } else {
+      return integerDisplay;
     }
-    
-    else{
-        theme.dark();
-    } 
-  
+  }
+
+  delete() {
+    this.currentOperand = this.currentOperand.toString().slice(0, -1);
+  }
+
+  calculate() {
+    let result;
+
+    const _previousOperand = parseFloat(this.previousOperand);
+    const _currentOperand = parseFloat(this.currentOperand);
+
+    if (isNaN(_previousOperand) || isNaN(_currentOperand)) return;
+
+    switch (this.operation) {
+      case "+":
+        result = _previousOperand + _currentOperand;
+        break;
+      case "-":
+        result = _previousOperand - _currentOperand;
+        break;
+      case "÷":
+        result = _previousOperand / _currentOperand;
+        break;
+      case "*":
+        result = _previousOperand * _currentOperand;
+        break;
+      default:
+        return;
+    }
+
+    this.currentOperand = result;
+    this.operation = undefined;
+    this.previousOperand = "";
+  }
+
+  chooseOperation(operation) {
+    if (this.currentOperand === "") return;
+
+    if (this.previousOperand !== "") {
+      this.calculate();
+    }
+
+    this.operation = operation;
+
+    this.previousOperand = this.currentOperand;
+    this.currentOperand = "";
+  }
+
+  appendNumber(number) {
+    if (this.currentOperand.includes(".") && number === ".") return;
+
+    this.currentOperand = `${this.currentOperand}${number.toString()}`;
+  }
+
+  clear() {
+    this.currentOperand = "";
+    this.previousOperand = "";
+    this.operation = undefined;
+  }
+
+  updateDisplay() {
+    this.previousOperandTextElement.innerText = `${this.formatDisplayNumber(
+      this.previousOperand
+    )} ${this.operation || ""}`;
+    this.currentOperandTextElement.innerText = this.formatDisplayNumber(
+      this.currentOperand
+    );
+  }
 }
 
+const calculator = new Calculator(
+  previousOperandTextElement,
+  currentOperandTextElement
+);
 
+for (const numberButton of numberButtons) {
+  numberButton.addEventListener("click", () => {
+    calculator.appendNumber(numberButton.innerText);
+    calculator.updateDisplay();
+  });
+}
+
+for (const operationButton of operationButtons) {
+  operationButton.addEventListener("click", () => {
+    calculator.chooseOperation(operationButton.innerText);
+    calculator.updateDisplay();
+  });
+}
+
+allClearButton.addEventListener("click", () => {
+  calculator.clear();
+  calculator.updateDisplay();
+});
+
+equalsButton.addEventListener("click", () => {
+  calculator.calculate();
+  calculator.updateDisplay();
+});
+
+deleteButton.addEventListener("click", () => {
+  calculator.delete();
+  calculator.updateDisplay();
+});
